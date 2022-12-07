@@ -21,14 +21,23 @@ pub struct Position {
     side_to_play: i8,
 }
 
-pub struct Move {
-    from: usize,
-    to: usize,
-    promotion: i8,
-}
+#[derive(Debug, Copy, Clone)]
+pub struct Move(usize, usize, i8);
 
 fn coordinates_from_index(index: usize) -> (usize, usize) {
     return (index % BOARD_SIZE, index / BOARD_SIZE)
+}
+
+fn color_of(piece: i8) -> i8 {
+    if piece == 0 {
+        0
+    }
+    else if piece < 0 {
+        -1
+    }
+    else {
+        1
+    }
 }
 
 impl Position {
@@ -46,6 +55,67 @@ impl Position {
             ],
             side_to_play: sides::WHITE,
         }
+    }
+
+    fn generate_moves(&self) -> Vec<Move> {
+        let mut result: Vec<Move> = vec![];
+
+        for square_index in 0..64 {
+            result.append(&mut match self.board[square_index] {
+                pieces::NONE => vec![],
+                pieces::PAWN => self.pawn_moves(square_index),
+                // f => panic!("Unknown figure id {}", f),
+                _ => vec![],
+            })
+        }
+
+        result
+    }
+
+    fn pawn_moves(&self, square: usize) -> Vec<Move> {
+        let mut result: Vec<Move> = vec![];
+
+        if self.board[square + 7] < pieces::NONE {
+            if 48 <= square && square <= 55 {
+                result.push(Move(square, square + 7, pieces::KNIGHT));
+                result.push(Move(square, square + 7, pieces::BISHOP));
+                result.push(Move(square, square + 7, pieces::ROOK));
+                result.push(Move(square, square + 7, pieces::QUEEN));
+            }
+            else {
+                result.push(Move(square, square + 7, 0));
+            }
+        }
+
+        if self.board[square + 9] < pieces::NONE {
+            if 48 <= square && square <= 55 {
+                result.push(Move(square, square + 9, pieces::KNIGHT));
+                result.push(Move(square, square + 9, pieces::BISHOP));
+                result.push(Move(square, square + 9, pieces::ROOK));
+                result.push(Move(square, square + 9, pieces::QUEEN));
+            }
+            else {
+                result.push(Move(square, square + 9, 0));
+            }
+        }
+
+        if self.board[square + 8] == pieces::NONE {
+            if 48 <= square && square <= 55 {
+                result.push(Move(square, square + 8, pieces::KNIGHT));
+                result.push(Move(square, square + 8, pieces::BISHOP));
+                result.push(Move(square, square + 8, pieces::ROOK));
+                result.push(Move(square, square + 8, pieces::QUEEN));
+            }
+            else {
+                result.push(Move(square, square + 8, 0));
+
+                if 8 <= square && square <= 15 && self.board[square + 16] == pieces::NONE {
+                    result.push(Move(square, square + 16, 0))
+                }
+            }
+        }
+
+        result
     }
 }
 
@@ -89,10 +159,6 @@ impl Move {
 fn main() {
     println!(
         "{:?}",
-        Move {
-            from: 12,
-            to: 28,
-            promotion: 0,
-        }.apply(Position::starting_position())
+        Move(12, 28, 0).apply(Position::starting_position())
     );
 }
